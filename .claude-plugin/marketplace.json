@@ -15,7 +15,7 @@
         "ref": "feat/improve-claude-status-mapping",
         "subpath": "plugins/warp"
       },
-      "version": "2.1.0-sheldonhull.1",
+      "version": "2.1.0-sheldonhull.2",
       "category": "productivity",
       "tags": [
         "notifications",
