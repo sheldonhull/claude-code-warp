@@ -10,9 +10,13 @@
       "name": "warp",
       "description": "Native Warp notifications when Claude completes tasks or needs input",
       "source": "./plugins/warp",
-      "version": "2.0.0",
+      "version": "2.1.0-sheldonhull.1",
       "category": "productivity",
-      "tags": ["notifications", "terminal", "warp"]
+      "tags": [
+        "notifications",
+        "terminal",
+        "warp"
+      ]
     }
   ]
 }
