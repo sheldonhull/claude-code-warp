@@ -9,13 +9,8 @@
     {
       "name": "warp",
       "description": "Native Warp notifications when Claude completes tasks or needs input",
-      "source": {
-        "source": "github",
-        "repo": "sheldonhull/claude-code-warp",
-        "ref": "feat/improve-claude-status-mapping",
-        "subpath": "plugins/warp"
-      },
-      "version": "2.1.0-sheldonhull.2",
+      "source": "./plugins/warp",
+      "version": "2.1.0-sheldonhull.3",
       "category": "productivity",
       "tags": [
         "notifications",
