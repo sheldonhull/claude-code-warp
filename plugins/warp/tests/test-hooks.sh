@@ -105,6 +105,37 @@ assert_json_field "event is idle_prompt" "$PAYLOAD" ".event" "idle_prompt"
 assert_json_field "summary present" "$PAYLOAD" ".summary" "Claude is waiting for your input"
 
 echo ""
+echo "--- Question asked event ---"
+PAYLOAD=$(build_payload '{"session_id":"s1","cwd":"/tmp/proj"}' "question_asked" \
+    --arg summary "Which library should we use?")
+assert_json_field "event is question_asked" "$PAYLOAD" ".event" "question_asked"
+assert_json_field "summary present" "$PAYLOAD" ".summary" "Which library should we use?"
+
+echo ""
+echo "--- Cancelled event ---"
+PAYLOAD=$(build_payload '{"session_id":"s1","cwd":"/tmp/proj"}' "cancelled" \
+    --arg reason "prompt_input_exit")
+assert_json_field "event is cancelled" "$PAYLOAD" ".event" "cancelled"
+assert_json_field "reason present" "$PAYLOAD" ".reason" "prompt_input_exit"
+
+echo ""
+echo "--- Tool failure event (success:false) ---"
+PAYLOAD=$(build_payload '{"session_id":"s1","cwd":"/tmp/proj"}' "tool_complete" \
+    --arg tool_name "Bash" \
+    --argjson success false \
+    --arg summary "exit 1")
+assert_json_field "event is tool_complete" "$PAYLOAD" ".event" "tool_complete"
+assert_json_field "tool_name present" "$PAYLOAD" ".tool_name" "Bash"
+assert_json_field "success is false" "$PAYLOAD" ".success" "false"
+
+echo ""
+echo "--- Tool success event (success:true) ---"
+PAYLOAD=$(build_payload '{"session_id":"s1","cwd":"/tmp/proj"}' "tool_complete" \
+    --arg tool_name "Bash" \
+    --argjson success true)
+assert_json_field "success is true" "$PAYLOAD" ".success" "true"
+
+echo ""
 echo "--- JSON special characters in values ---"
 PAYLOAD=$(build_payload '{"session_id":"s1","cwd":"/tmp/proj"}' "stop" \
     --arg query 'what does "hello world" mean?' \
@@ -218,10 +249,34 @@ assert_eq "legacy Warp shows active message" \
 echo ""
 echo "--- Modern-only hooks exit silently without protocol version ---"
 
-for HOOK in on-permission-request.sh on-prompt-submit.sh on-post-tool-use.sh; do
+for HOOK in on-permission-request.sh on-prompt-submit.sh on-post-tool-use.sh \
+            on-pre-tool-use.sh on-post-tool-use-failure.sh on-session-end.sh; do
     echo '{}' | bash "$HOOK_DIR/$HOOK" 2>/dev/null
     assert_eq "$HOOK exits 0 without protocol version" "0" "$?"
 done
+
+echo ""
+echo "--- Notification routing ---"
+export WARP_CLI_AGENT_PROTOCOL_VERSION=1
+export WARP_CLIENT_VERSION="v0.2026.04.01.08.00.stable_00"
+
+# permission_prompt notification_type → suppressed (PermissionRequest hook owns it)
+echo '{"notification_type":"permission_prompt","session_id":"s1","cwd":"/tmp"}' \
+    | bash "$HOOK_DIR/on-notification.sh" 2>/dev/null
+assert_eq "on-notification permission_prompt suppressed" "0" "$?"
+
+# unknown notification_type → suppressed
+echo '{"notification_type":"some_future_thing","session_id":"s1","cwd":"/tmp"}' \
+    | bash "$HOOK_DIR/on-notification.sh" 2>/dev/null
+assert_eq "on-notification unknown suppressed" "0" "$?"
+
+# SessionEnd resume → no event emitted, exit 0
+echo '{"reason":"resume","session_id":"s1","cwd":"/tmp"}' \
+    | bash "$HOOK_DIR/on-session-end.sh" 2>/dev/null
+assert_eq "on-session-end resume suppressed" "0" "$?"
+
+unset WARP_CLI_AGENT_PROTOCOL_VERSION
+unset WARP_CLIENT_VERSION
 
 # --- Summary ---
 

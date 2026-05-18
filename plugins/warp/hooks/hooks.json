@@ -24,7 +24,6 @@
     ],
     "Notification": [
       {
-        "matcher": "idle_prompt",
         "hooks": [
           {
             "type": "command",
@@ -53,12 +52,43 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/on-pre-tool-use.sh"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/on-post-tool-use.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/on-post-tool-use-failure.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/on-session-end.sh"
           }
         ]
       }
